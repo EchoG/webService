@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta charset="utf-8">
+	<title>Weather and Photo</title>
+	<link rel="stylesheet" type="text/css" media="screen" href="resources/aux/css/design.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="author" content="Chenran Gong">
+	
+	<script type="text/javascript" src="resources/aux/jQuery/jquery-1.11.1.min.js" ></script>
+	<script type="text/javascript">
+	function queryTest(){
+		//Get city name from input element in UI and set the needed url for data query
+		var cityname = $("#cityname").val();
+		var url_weather = "http://api.openweathermap.org/data/2.5/weather?q="+cityname;
+		var url_forecast = "http://api.openweathermap.org/data/2.5/forecast/daily?q="+cityname+"&mode=json&units=metric&cnt=7";
+		var url_photo = "https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q="+cityname+"&callback=foo";
+		
+		//Get the data of API for weather today and show data in UI
+		$.getJSON(url_weather, function(json){
+			var weather = json.weather;
+			var weather_str = "";
+			for (var i=0; i<weather.length; i++) {
+				weather_str += weather[i].main + ",";
+			}
+			weather_str = weather_str.substring(0, weather_str.length-1);
+		
+			$('#Weather').html(weather_str);
+			$('#Temp').html(json.main.temp);
+			$('#Temp_min').html(json.main.temp_min);
+			$('#Temp_max').html(json.main.temp_max);
+			
+			var icon_weather = json.weather[0].icon;
+			url_icon = "http://openweathermap.org/img/w/"+icon_weather+".png"
+			$('#Weather_icon').attr("src",url_icon);
+			
+	});
+	
+		//Get the data of API for weather farecast in 7 days and show data in UI
+		$.getJSON(url_forecast, function(json){
+			var list_forecast = json.list;
+			$('#table_forecast').html("<tr><th>DATE</th><th>ICON</th><th>TEMP_DAY</th><th>TEMP_MAX</th><th>TEMP_MIN</th></tr>");
+			
+			for (var i=0; i<list_forecast.length; i++) {
+				url_weatherForcast = "http://openweathermap.org/img/w/"+list_forecast[i].weather[0].icon+".png";
+				var date = unix_to_datetime(list_forecast[i].dt);
+				$('#table_forecast').append("<tr><td>"+date+"</td><td align='center' valign='middle'><img src="+url_weatherForcast+"></td><td>"+list_forecast[i].temp.day+"</td><td>"+list_forecast[i].temp.max+"</td><td>"+list_forecast[i].temp.min+"</td></tr>");
+				}
+			
+			
+	});
+		
+		//Get the data from API for photo by AJAX, and show data in UI
+		$.ajax({
+			url:url_photo,
+			type:"GET",
+			dataType:'jsonp',
+			jsonp:'callback',
+			jsonpCallback:'foo',
+			success:function(json){
+				$('#table_photo').html("");
+				
+				var photo_list = json.responseData.results;
+				for (var i=0; i<photo_list.length; i++){
+					var img_url = json.responseData.results[i].url;
+					$('#table_photo').append("<tr><td><img src="+img_url+" height='300px' width='300px'  onerror='loadErrorImg(this)' /></td><tr>");
+					
+				}
+			}
+		});
+			
+}
+	//change time from unix form
+	 function unix_to_datetime(unix){
+		 var now = new Date(parseInt(unix)*1000);
+		 return now.toLocaleString().replace(/年|月/g, "-").replace(/日/g, " ").replace(/上午/g, "AM").replace(/上午/g, "PM");
+	 }
+	
+	 function loadErrorImg(image) {
+         image.onerror = "";
+         image.src='resources/aux/img/default_img.jpg';
+         return true
+	 }
+
+</script>
+</head>
+
+<body id="css-zen-garden">
+<div class="page-wrapper">
+
+	<section class="intro" id="zen-intro">
+		<header role="banner">
+		</header>
+
+		<!--input city name-->
+		<div class="summary" id="zen-summary" role="article">
+			City Name: <input type="text" id="cityname" name="fname">
+			<input type="button" id ="dscrpt" value="search" onclick="queryTest()" >
+		</div>
+
+		<!--show data from invoke API-weather today-->
+		<div class="preamble" id="zen-preamble" role="article">
+			<h3>WEATHER TODAY</h3>
+			<p><b>Weather: </b> <span id="Weather"></span></p>
+			<p><b>Temp: </b> <span id="Temp"></span></p>
+			<p><b>Temp_min: </b> <span id="Temp_min"></span></p>
+			<p><b>Temp_max: </b> <span id="Temp_max"></span></p>
+			<img id="Weather_icon">	
+		</div>
+	</section>
+
+	<div class="main supporting" id="zen-supporting" role="main">
+	
+		<!--show data from invoke API-weather forecast in future 7 days-->
+		<div class="explanation" id="zen-explanation" role="article">
+			<h3>WEATHER FORECAST</h3>
+			<p>7 Days in Future</p>
+			<hr></hr>
+			<table id="table_forecast">  
+  				<tr>  
+    				<th>DATE</th>  
+    				<th>ICON</th>  
+    				<th>TEMP_DAY</th>
+    				<th>TEMP_MAX</th>
+    				<th>TEMP_MIN</th>
+  				</tr>  
+			</table>  
+			<hr></hr>
+		</div>
+
+		<!--show data from invoke API-photo-->
+		<div class="benefits" id="zen-benefits" role="article">
+			<h3>PHOTOS about the City</h3>
+			<p>to be showed</p>
+			<div style="height:25px"></div>
+			<table id="table_photo">  	
+			</table>  
+			
+		</div>
+	</div>
+
+
+	<aside class="sidebar" role="complementary">
+		<div class="wrapper">
+
+			<div class="design-selection" id="design-selection">
+				<h3 class="select">Select:</h3>
+				<nav role="navigation">
+					<ul>
+					<li>
+						<font size="3">weather today</font>
+					</li>					
+					<li>
+						<font size="3">weather forecast</font>
+					</li>					
+					<li>
+						<font size="3">photos about the city</font>
+					</li>					
+					</ul>
+				</nav>
+			</div>
+		</div>
+	</aside>
+
+
+</div>
+</body></html>
